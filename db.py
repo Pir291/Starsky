@@ -1,19 +1,23 @@
+import os
 import mysql.connector
 from mysql.connector import Error
 from typing import List, Dict, Optional
 import json
 
+
 DB_CONFIG = {
-    "host": "localhost",
-    "port": 3306,
-    "user": "illa",
-    "password": "58442",
-    "database": "starsky_db",
+    "host": os.environ.get("DB_HOST", "sql10.freesqldatabase.com"),
+    "port": int(os.environ.get("DB_PORT", "3306")),
+    "user": os.environ.get("DB_USER", "sql10816934"),
+    "password": os.environ.get("DB_PASSWORD", "zXg6nD6AAF"),
+    "database": os.environ.get("DB_NAME", "sql10816934"),
 }
+
 
 
 def get_connection():
     return mysql.connector.connect(**DB_CONFIG)
+
 
 
 # ====== USERS ======
@@ -256,3 +260,10 @@ def get_all_star_states() -> List[Dict]:
     finally:
         cur.close()
         conn.close()
+if __name__ == "__main__":
+    try:
+        conn = get_connection()
+        print("Connected:", conn.is_connected())
+        conn.close()
+    except Error as e:
+        print("DB error:", e)
