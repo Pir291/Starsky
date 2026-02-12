@@ -1,0 +1,2594 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Star Users</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        color: #e5e7eb;
+      }
+
+body {
+  position: relative;
+  background: linear-gradient(
+    -45deg,
+    #010712,  /* еще темнее */
+    #080d16,  /* еще темнее */
+    #0d1322,  /* еще темнее */
+    #121826,
+    #1a1440   /* темный индиго */
+  );
+  background-size: 400% 400%;
+  animation: gradientShift 35s ease infinite; /* медленнее */
+}
+
+      @keyframes gradientShift {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      #starfield-background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(249, 115, 22, 0.03) 0%, transparent 50%);
+  z-index: 0; /* Было 1, стало 0 */
+  animation: pulseBackground 25s ease-in-out infinite;
+}
+
+#starfield {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: transparent;
+  z-index: 1; /* Остается 1, теперь выше фонов */
+}
+
+      /* Эффект тумана/небулы */
+      #nebula-overlay {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background: 
+          radial-gradient(circle at 30% 50%, rgba(168, 85, 247, 0.1) 0%, transparent 40%),
+          radial-gradient(circle at 70% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
+          radial-gradient(circle at 50% 70%, rgba(249, 115, 22, 0.06) 0%, transparent 40%);
+        z-index: 1;
+        animation: nebulaFloat 30s ease-in-out infinite;
+        mix-blend-mode: screen;
+      }
+
+      @keyframes nebulaFloat {
+        0%, 100% {
+          transform: translate(0, 0) scale(1);
+        }
+        25% {
+          transform: translate(-10px, 10px) scale(1.05);
+        }
+        50% {
+          transform: translate(10px, -10px) scale(1.1);
+        }
+        75% {
+          transform: translate(-10px, -10px) scale(1.05);
+        }
+      }
+
+      #top-bar {
+        position: fixed;
+        top: 12px;
+        left: 16px;
+        right: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: rgba(2, 6, 23, 0.9);
+        border: 1px solid rgba(30, 41, 59, 0.8);
+        z-index: 30;
+        backdrop-filter: blur(14px);
+        box-shadow: 
+          0 8px 20px rgba(0, 0, 0, 0.7),
+          0 0 30px rgba(88, 28, 135, 0.4);
+        animation: topBarGlow 4s ease-in-out infinite;
+      }
+
+      @keyframes topBarGlow {
+        0%, 100% {
+          box-shadow: 
+            0 8px 20px rgba(0, 0, 0, 0.7),
+            0 0 30px rgba(88, 28, 135, 0.4);
+        }
+        50% {
+          box-shadow: 
+            0 8px 20px rgba(0, 0, 0, 0.7),
+            0 0 40px rgba(59, 130, 246, 0.3),
+            0 0 60px rgba(88, 28, 135, 0.2);
+        }
+      }
+
+      #top-left {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+      }
+
+      #brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      #brand-logo {
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        background: radial-gradient(circle at 30% 30%, #f97316, #7c3aed);
+        box-shadow: 
+          0 0 16px rgba(249, 115, 22, 0.7),
+          0 0 30px rgba(124, 58, 237, 0.5);
+        animation: logoPulse 3s ease-in-out infinite;
+      }
+
+      @keyframes logoPulse {
+        0%, 100% {
+          box-shadow: 
+            0 0 16px rgba(249, 115, 22, 0.7),
+            0 0 30px rgba(124, 58, 237, 0.5);
+        }
+        50% {
+          box-shadow: 
+            0 0 20px rgba(249, 115, 22, 0.9),
+            0 0 40px rgba(124, 58, 237, 0.7);
+        }
+      }
+
+      #brand-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.1;
+      }
+
+      #brand-title {
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        background: linear-gradient(90deg, #f97316, #7c3aed, #1d4ed8);
+        background-size: 200% auto;
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: textShine 3s ease-in-out infinite;
+      }
+
+      @keyframes textShine {
+        0%, 100% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+      }
+
+      #brand-subtitle {
+        font-size: 11px;
+        color: #94a3b8;
+      }
+
+      #system-status {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        color: #94a3b8;
+      }
+
+      #status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #16a34a;
+        box-shadow: 
+          0 0 10px rgba(22, 163, 74, 0.6),
+          0 0 20px rgba(22, 163, 74, 0.3);
+        animation: statusPulse 2s ease-in-out infinite;
+      }
+
+      @keyframes statusPulse {
+        0%, 100% {
+          box-shadow: 
+            0 0 10px rgba(22, 163, 74, 0.6),
+            0 0 20px rgba(22, 163, 74, 0.3);
+        }
+        50% {
+          box-shadow: 
+            0 0 15px rgba(22, 163, 74, 0.8),
+            0 0 30px rgba(22, 163, 74, 0.4);
+        }
+      }
+
+      #top-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      #login-panel {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 8px;
+        border-radius: 999px;
+        background: rgba(2, 6, 23, 0.85);
+        border: 1px solid rgba(30, 41, 59, 0.8);
+        animation: panelGlow 5s ease-in-out infinite;
+      }
+
+      @keyframes panelGlow {
+        0%, 100% {
+          border-color: rgba(30, 41, 59, 0.8);
+          box-shadow: 0 0 10px rgba(124, 58, 237, 0.15);
+        }
+        50% {
+          border-color: rgba(249, 115, 22, 0.7);
+          box-shadow: 0 0 15px rgba(249, 115, 22, 0.3);
+        }
+      }
+
+      #login-panel.hidden {
+        display: none;
+      }
+
+      #login-label {
+        font-size: 11px;
+        color: #94a3b8;
+      }
+
+      #login-code {
+        width: 80px;
+        padding: 4px 6px;
+        font-size: 11px;
+        border-radius: 999px;
+        border: 1px solid rgba(30, 41, 59, 0.9);
+        outline: none;
+        background: rgba(2, 6, 23, 0.95);
+        color: #e5e7eb;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        text-align: center;
+        transition: all 0.3s ease;
+      }
+
+      #login-code:focus {
+        border-color: rgba(249, 115, 22, 0.8);
+        box-shadow: 0 0 10px rgba(249, 115, 22, 0.3);
+      }
+
+      #login-btn {
+        padding: 4px 10px;
+        font-size: 11px;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
+        background: linear-gradient(90deg, #f97316, #7c3aed);
+        color: white;
+        font-weight: 600;
+        box-shadow: 0 0 12px rgba(124, 58, 237, 0.6);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      #login-btn:hover {
+        filter: brightness(1.05);
+        box-shadow: 0 0 20px rgba(124, 58, 237, 0.8);
+        transform: translateY(-1px);
+      }
+
+      #login-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: 0.5s;
+      }
+
+      #login-btn:hover::before {
+        left: 100%;
+      }
+
+      #code-timer {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: rgba(30, 64, 175, 0.2);
+        border: 1px solid rgba(37, 99, 235, 0.5);
+        font-size: 11px;
+        color: #93c5fd;
+        animation: timerPulse 2s ease-in-out infinite;
+      }
+
+      @keyframes timerPulse {
+        0%, 100% {
+          box-shadow: 0 0 5px rgba(37, 99, 235, 0.2);
+        }
+        50% {
+          box-shadow: 0 0 10px rgba(37, 99, 235, 0.3);
+        }
+      }
+
+      #timer-icon {
+        font-size: 12px;
+      }
+
+      #timer-digits {
+        font-variant-numeric: tabular-nums;
+      }
+
+      #code-timer.hidden {
+        display: none;
+      }
+
+      #user-profile {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(2, 6, 23, 0.95);
+        border: 1px solid rgba(56, 189, 248, 0.7);
+        cursor: pointer;
+        transition: all 0.15s ease;
+        animation: userGlow 4s ease-in-out infinite;
+      }
+
+      @keyframes userGlow {
+        0%, 100% {
+          border-color: rgba(56, 189, 248, 0.7);
+          box-shadow: 0 0 12px rgba(37, 99, 235, 0.2);
+        }
+        50% {
+          border-color: rgba(124, 58, 237, 0.7);
+          box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+        }
+      }
+
+      #user-profile.hidden {
+        display: none;
+      }
+
+      #user-profile:hover {
+        background: rgba(2, 6, 23, 1);
+        border-color: rgba(37, 99, 235, 0.8);
+        box-shadow: 0 0 20px rgba(37, 99, 235, 0.5);
+        transform: translateY(-1px);
+      }
+
+      #user-avatar {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        background: radial-gradient(circle at 30% 30%, #0ea5e9, #4f46e5);
+        box-shadow: 0 0 14px rgba(37, 99, 235, 0.6);
+        animation: avatarPulse 3s ease-in-out infinite;
+      }
+
+      @keyframes avatarPulse {
+        0%, 100% {
+          box-shadow: 0 0 14px rgba(37, 99, 235, 0.6);
+        }
+        50% {
+          box-shadow: 0 0 20px rgba(37, 99, 235, 0.8);
+        }
+      }
+
+      #user-label {
+        font-size: 11px;
+        color: #e5e7eb;
+      }
+
+      #user-activity-chip {
+        font-size: 11px;
+        padding: 2px 6px;
+        border-radius: 999px;
+        background: rgba(21, 128, 61, 0.15);
+        color: #86efac;
+        border: 1px solid rgba(21, 128, 61, 0.4);
+        animation: activityPulse 3s ease-in-out infinite;
+      }
+
+      @keyframes activityPulse {
+        0%, 100% {
+          box-shadow: 0 0 5px rgba(21, 128, 61, 0.2);
+        }
+        50% {
+          box-shadow: 0 0 10px rgba(21, 128, 61, 0.3);
+        }
+      }
+
+      #tooltip {
+        position: fixed;
+        pointer-events: none;
+        background: rgba(2, 6, 23, 0.98);
+        color: #e5e7eb;
+        padding: 8px 10px;
+        border-radius: 10px;
+        font-size: 11px;
+        border: 1px solid rgba(30, 41, 59, 0.8);
+        box-shadow: 
+          0 10px 25px rgba(0, 0, 0, 0.8),
+          0 0 20px rgba(124, 58, 237, 0.25);
+        max-width: 220px;
+        z-index: 40;
+        opacity: 0;
+        transform: translate(-50%, -100%);
+        transition: opacity 0.12s ease;
+        white-space: normal;
+        word-wrap: break-word;
+        backdrop-filter: blur(10px);
+      }
+
+      #tooltip strong {
+        color: #fbbf24;
+        font-size: 12px;
+      }
+
+      /* Магазин слева - ИЗНАЧАЛЬНО СВЕРНУТЫЙ */
+      #skin-panel {
+        position: fixed;
+        top: 76px;
+        left: 16px;
+        right: auto;
+        width: 300px;
+        max-width: calc(100vw - 32px);
+        max-height: 40px;
+        padding: 0;
+        border-radius: 12px;
+        background: rgba(2, 6, 23, 0.95);
+        border: 2px solid rgba(30, 41, 59, 0.8);
+        font-size: 12px;
+        z-index: 25;
+        transition: all 0.25s ease;
+        overflow: hidden;
+        box-shadow: 
+          0 10px 25px rgba(0, 0, 0, 0.7),
+          0 0 20px rgba(124, 58, 237, 0.15);
+        cursor: pointer;
+        backdrop-filter: blur(10px);
+        /* Убрана анимация покачивания */
+      }
+
+      #skin-panel.collapsed {
+        max-height: 40px;
+      }
+
+      #skin-panel:not(.collapsed) {
+        max-height: 280px;
+      }
+
+      #skin-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 12px;
+        line-height: 1.1;
+        background: linear-gradient(
+          90deg,
+          rgba(2, 6, 23, 0.98),
+          rgba(30, 41, 59, 0.9)
+        );
+        border-bottom: 1px solid rgba(30, 41, 59, 0.7);
+      }
+
+      #skin-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #e5e7eb;
+        background: linear-gradient(90deg, #f97316, #7c3aed);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      #skin-balance {
+        margin-top: 2px;
+        font-size: 11px;
+        color: #93c5fd;
+      }
+
+      #skin-toggle {
+        font-size: 12px;
+        color: #94a3b8;
+        transition: transform 0.25s ease;
+      }
+
+      #skin-panel:not(.collapsed) #skin-toggle {
+        transform: rotate(180deg);
+      }
+
+      #skin-body {
+        max-height: 260px;
+        overflow-y: auto;
+        padding: 12px 16px 20px;
+        box-sizing: border-box;
+        display: none;
+        background: rgba(2, 6, 23, 0.98);
+      }
+
+      #skin-panel:not(.collapsed) #skin-body {
+        display: block;
+      }
+
+      .skin-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        padding: 6px 0;
+        border-bottom: 1px solid rgba(30, 41, 59, 0.3);
+      }
+
+      .skin-item:last-child {
+        border-bottom: none;
+      }
+
+      .skin-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .skin-color-preview {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        border: 1px solid rgba(30, 41, 59, 0.8);
+        box-shadow: 0 0 8px currentColor;
+        transition: all 0.3s ease;
+      }
+
+      .skin-color-preview:hover {
+        transform: scale(1.2);
+        box-shadow: 0 0 12px currentColor;
+      }
+
+      .skin-item button {
+        font-size: 11px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
+        background: linear-gradient(90deg, rgba(37, 99, 235, 0.1), rgba(124, 58, 237, 0.1));
+        color: #93c5fd;
+        border: 1px solid rgba(37, 99, 235, 0.5);
+        transition: all 0.3s ease;
+      }
+
+      .skin-item button:hover {
+        background: linear-gradient(90deg, rgba(37, 99, 235, 0.2), rgba(124, 58, 237, 0.2));
+        transform: translateY(-1px);
+        box-shadow: 0 0 10px rgba(37, 99, 235, 0.3);
+      }
+
+      /* Профиль справа */
+      #profile-panel {
+        position: fixed;
+        top: 76px;
+        right: 16px;
+        left: auto;
+        width: 260px;
+        max-width: calc(100vw - 32px);
+        background: rgba(2, 6, 23, 0.98);
+        border-radius: 14px;
+        border: 1px solid rgba(30, 41, 59, 0.8);
+        padding: 10px 12px;
+        z-index: 30;
+        box-shadow: 
+          0 10px 25px rgba(0, 0, 0, 0.8),
+          0 0 20px rgba(124, 58, 237, 0.2);
+        opacity: 0;
+        transform: translateY(-10px);
+        pointer-events: none;
+        transition: opacity 0.18s ease, transform 0.18s ease;
+        backdrop-filter: blur(10px);
+      }
+
+      #profile-panel.visible {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+
+      #profile-panel h3 {
+        font-size: 13px;
+        margin-bottom: 8px;
+        color: #e5e7eb;
+        background: linear-gradient(90deg, #f97316, #7c3aed);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      #profile-panel .profile-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        margin-bottom: 4px;
+        color: #93c5fd;
+        padding: 2px 0;
+        border-bottom: 1px solid rgba(30, 41, 59, 0.3);
+      }
+
+      #profile-panel label {
+        font-size: 11px;
+        color: #94a3b8;
+      }
+
+      #edit-info {
+        width: 100%;
+        margin-top: 4px;
+        padding: 6px 8px;
+        border-radius: 8px;
+        border: 1px solid rgba(30, 41, 59, 0.8);
+        background: rgba(2, 6, 23, 0.95);
+        color: #e5e7eb;
+        font-size: 11px;
+        resize: none;
+        min-height: 40px;
+        max-height: 80px;
+        transition: all 0.3s ease;
+      }
+
+      #edit-info:focus {
+        border-color: rgba(249, 115, 22, 0.8);
+        box-shadow: 0 0 10px rgba(249, 115, 22, 0.25);
+      }
+
+      #save-info {
+        margin-top: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: none;
+        font-size: 11px;
+        cursor: pointer;
+        background: linear-gradient(90deg, #16a34a, #15803d);
+        color: white;
+        transition: all 0.3s ease;
+      }
+
+      #save-info:hover {
+        filter: brightness(1.06);
+        transform: translateY(-1px);
+        box-shadow: 0 0 15px rgba(21, 128, 61, 0.4);
+      }
+
+      /* Чат */
+      #chat-overlay {
+        position: fixed;
+        bottom: 16px;
+        right: 16px;
+        width: 420px;
+        max-width: calc(100vw - 32px);
+        max-height: 580px;
+        border-radius: 16px;
+        background: rgba(2, 6, 23, 0.98);
+        border: 1px solid rgba(30, 41, 59, 0.8);
+        z-index: 26;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 
+          0 10px 26px rgba(0, 0, 0, 0.8),
+          0 0 20px rgba(124, 58, 237, 0.15);
+        backdrop-filter: blur(10px);
+        /* Убрана анимация покачивания */
+      }
+
+      #chat-overlay.collapsed {
+        max-height: 40px;
+      }
+
+      #chat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 12px;
+        background: linear-gradient(
+          90deg,
+          rgba(2, 6, 23, 0.98),
+          rgba(30, 41, 59, 0.9)
+        );
+        border-bottom: 1px solid rgba(30, 41, 59, 0.8);
+        flex-shrink: 0;
+      }
+
+      #chat-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #e5e7eb;
+        background: linear-gradient(90deg, #f97316, #7c3aed);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      #chat-toggle {
+        font-size: 12px;
+        color: #94a3b8;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+      }
+
+      #chat-toggle:hover {
+        color: #e5e7eb;
+        transform: scale(1.2);
+      }
+
+      #chat-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 12px;
+        gap: 8px;
+        overflow: hidden;
+        min-height: 0;
+      }
+
+      #chat-tabs {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 6px;
+        flex-shrink: 0;
+      }
+
+      .chat-tab {
+        flex: 1;
+        font-size: 12px;
+        padding: 6px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(55, 65, 81, 0.8);
+        background: rgba(2, 6, 23, 0.95);
+        color: #e5e7eb;
+        cursor: pointer;
+        text-align: center;
+        white-space: nowrap;
+        transition: all 0.3s ease;
+      }
+
+      .chat-tab:hover {
+        background: rgba(30, 41, 59, 0.3);
+        border-color: rgba(37, 99, 235, 0.7);
+      }
+
+      .chat-tab.active {
+        background: linear-gradient(90deg, #1d4ed8, #7c3aed);
+        border-color: transparent;
+        box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
+      }
+
+      #active-users-title {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-bottom: 4px;
+        flex-shrink: 0;
+      }
+
+      #active-users {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 10px;
+        flex-shrink: 0;
+        max-height: 80px;
+        overflow-y: auto;
+        padding: 2px;
+      }
+
+      .user-tag {
+        font-size: 11px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(30, 41, 59, 0.8);
+        background: rgba(2, 6, 23, 0.95);
+        cursor: pointer;
+        white-space: nowrap;
+        line-height: 1.2;
+        transition: all 0.3s ease;
+      }
+
+      .user-tag:hover {
+        background: rgba(30, 41, 59, 0.3);
+        border-color: rgba(37, 99, 235, 0.7);
+        transform: translateY(-1px);
+        box-shadow: 0 0 10px rgba(37, 99, 235, 0.2);
+      }
+
+      #chat-messages-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
+      #chat-messages,
+      #chat-private-messages {
+        flex: 1;
+        min-height: 200px;
+        max-height: 380px;
+        overflow-y: auto;
+        padding: 10px;
+        border-radius: 10px;
+        background: rgba(2, 6, 23, 0.95);
+        border: 1px solid rgba(15, 23, 42, 0.9);
+        font-size: 13px;
+        line-height: 1.4;
+        margin-bottom: 0;
+      }
+
+      #chat-messages::-webkit-scrollbar,
+      #chat-private-messages::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      #chat-messages::-webkit-scrollbar-track,
+      #chat-private-messages::-webkit-scrollbar-track {
+        background: rgba(15, 23, 42, 0.3);
+        border-radius: 3px;
+      }
+
+      #chat-messages::-webkit-scrollbar-thumb,
+      #chat-private-messages::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #1d4ed8, #7c3aed);
+        border-radius: 3px;
+      }
+
+      #chat-messages::-webkit-scrollbar-thumb:hover,
+      #chat-private-messages::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #7c3aed, #f97316);
+      }
+
+      #chat-private-messages {
+        display: none;
+      }
+
+      .chat-line {
+        margin-bottom: 8px;
+        word-wrap: break-word;
+        padding-right: 8px;
+        animation: messageAppear 0.3s ease-out;
+      }
+
+      @keyframes messageAppear {
+        from {
+          opacity: 0;
+          transform: translateY(5px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .chat-system {
+        color: #94a3b8;
+        font-style: italic;
+        font-size: 12px;
+      }
+
+      .chat-me {
+        color: #22c55e;
+        text-shadow: 0 0 5px rgba(34, 197, 94, 0.25);
+      }
+
+      .chat-other {
+        color: #e5e7eb;
+      }
+
+      .chat-line strong {
+        color: #fbbf24;
+        font-weight: 600;
+        text-shadow: 0 0 5px rgba(251, 191, 36, 0.25);
+      }
+
+      #chat-input-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px;
+        border-top: 1px solid rgba(15, 23, 42, 0.9);
+        background: rgba(2, 6, 23, 0.98);
+        flex-shrink: 0;
+      }
+
+      #chat-input {
+        flex: 1;
+        border-radius: 999px;
+        border: 1px solid rgba(55, 65, 81, 0.8);
+        background: rgba(2, 6, 23, 0.98);
+        color: #e5e7eb;
+        font-size: 13px;
+        padding: 8px 14px;
+        outline: none;
+        min-height: 36px;
+        transition: all 0.3s ease;
+      }
+
+      #chat-input:focus {
+        border-color: rgba(37, 99, 235, 0.8);
+        box-shadow: 0 0 15px rgba(37, 99, 235, 0.25);
+      }
+
+      #chat-input::placeholder {
+        color: #94a3b8;
+        opacity: 0.8;
+      }
+
+      #chat-send {
+        font-size: 13px;
+        padding: 8px 16px;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(90deg, #1d4ed8, #7c3aed);
+        color: white;
+        cursor: pointer;
+        font-weight: 500;
+        white-space: nowrap;
+        min-width: 80px;
+        transition: all 0.3s ease;
+      }
+
+      #chat-send:hover {
+        filter: brightness(1.05);
+        transform: translateY(-1px);
+        box-shadow: 0 0 20px rgba(37, 99, 235, 0.4);
+      }
+
+      #private-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(2, 6, 23, 0.95);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+        backdrop-filter: blur(5px);
+      }
+
+      #private-modal-content {
+        background: rgba(2, 6, 23, 0.98);
+        border-radius: 12px;
+        border: 1px solid rgba(30, 41, 59, 0.9);
+        padding: 16px;
+        width: 260px;
+        max-width: calc(100vw - 32px);
+        text-align: center;
+        box-shadow: 
+          0 20px 40px rgba(0, 0, 0, 0.9),
+          0 0 30px rgba(124, 58, 237, 0.3);
+        animation: modalAppear 0.3s ease-out;
+        backdrop-filter: blur(10px);
+      }
+
+      @keyframes modalAppear {
+        from {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      #private-modal-text {
+        font-size: 13px;
+        margin-bottom: 12px;
+        color: #e5e7eb;
+        background: linear-gradient(90deg, #f97316, #7c3aed);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      #private-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      #private-accept,
+      #private-reject {
+        flex: 1;
+        padding: 6px 0;
+        border-radius: 999px;
+        border: none;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      #private-accept {
+        background: linear-gradient(90deg, #16a34a, #15803d);
+        color: white;
+      }
+
+      #private-accept:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 0 15px rgba(21, 128, 61, 0.4);
+      }
+
+      #private-reject {
+        background: rgba(30, 41, 59, 0.2);
+        color: #93c5fd;
+        border: 1px solid rgba(37, 99, 235, 0.6);
+      }
+
+      #private-reject:hover {
+        background: rgba(30, 41, 59, 0.3);
+        transform: translateY(-1px);
+        box-shadow: 0 0 10px rgba(37, 99, 235, 0.25);
+      }
+
+      /* Медиа-запросы */
+      @media (max-width: 640px) {
+        #top-bar {
+          flex-direction: column;
+          align-items: flex-start;
+          border-radius: 18px;
+        }
+
+        #skin-panel {
+          right: 8px;
+          left: 8px;
+          width: auto;
+        }
+
+        #profile-panel {
+          top: 100px;
+        }
+
+        #chat-overlay {
+          right: 8px;
+          left: 8px;
+          width: auto;
+          bottom: 8px;
+          max-height: 70vh;
+        }
+
+        #chat-body {
+          padding: 10px;
+        }
+
+        #chat-tabs {
+          gap: 3px;
+        }
+
+        .chat-tab {
+          font-size: 11px;
+          padding: 5px 6px;
+        }
+
+        #chat-messages,
+        #chat-private-messages {
+          max-height: 50vh;
+          padding: 8px;
+        }
+
+        #chat-input-row {
+          padding: 10px;
+        }
+
+        #chat-input {
+          padding: 6px 12px;
+          font-size: 12px;
+        }
+
+        #chat-send {
+          padding: 6px 12px;
+          font-size: 12px;
+          min-width: 70px;
+        }
+
+        #active-users {
+          max-height: 60px;
+        }
+      }
+
+      #chat-messages:empty::before,
+      #chat-private-messages:empty::before {
+        content: "Нет сообщений";
+        color: #94a3b8;
+        font-style: italic;
+        font-size: 12px;
+        display: block;
+        text-align: center;
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Анимированный фон -->
+    <div id="starfield-background"></div>
+    <div id="nebula-overlay"></div>
+    
+    <!-- Основной канвас со звездами -->
+    <canvas id="starfield"></canvas>
+
+    <!-- Остальной HTML код остается без изменений -->
+    <div id="top-bar">
+      <div id="top-left">
+        <div id="brand">
+          <div id="brand-logo"></div>
+          <div id="brand-text">
+            <div id="brand-title">Star Users</div>
+            <div id="brand-subtitle">Ночное небо из людей</div>
+          </div>
+        </div>
+        <div id="system-status">
+          <div id="status-dot"></div>
+          <span>Система активна</span>
+        </div>
+      </div>
+
+      <div id="top-right">
+        <div id="login-panel">
+          <span id="login-label">Код входа через бота:</span>
+          <input
+            id="login-code"
+            maxlength="6"
+            placeholder="ABC123"
+            autocomplete="one-time-code"
+          />
+          <button id="login-btn">Войти</button>
+          <div id="code-timer" class="hidden">
+            <span id="timer-icon">⏳</span>
+            <span id="timer-digits">
+              <span id="timer-minutes">60</span>:<span id="timer-seconds"
+                >00</span
+              >
+            </span>
+          </div>
+        </div>
+
+        <div id="user-profile" class="hidden">
+          <div id="user-avatar"></div>
+          <span id="user-label">@user</span>
+          <span id="user-activity-chip">активен</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="profile-panel">
+      <h3>Ваш профиль</h3>
+      <div class="profile-row">
+        <span>Ник:</span>
+        <span id="profile-username"></span>
+      </div>
+      <div class="profile-row">
+        <span>Активность:</span>
+        <span id="profile-activity"></span>
+      </div>
+      <div class="profile-row">
+        <span>Цвет звезды:</span>
+        <span id="profile-color"></span>
+      </div>
+      <div class="profile-row">
+        <span>Форма звезды:</span>
+        <span id="profile-shape"></span>
+      </div>
+      <label for="edit-info">Описание (до 100 символов):</label>
+      <textarea id="edit-info" maxlength="100"></textarea>
+      <button id="save-info">Сохранить</button>
+    </div>
+
+    <div id="skin-panel" class="collapsed">
+      <div id="skin-header">
+        <div>
+          <div id="skin-title">Магазин звёзд</div>
+          <div id="skin-balance">Ваша активность: 0 очков</div>
+        </div>
+        <div id="skin-toggle">▼</div>
+      </div>
+      <div id="skin-body">
+        <div id="skin-list"></div>
+      </div>
+    </div>
+
+    <div id="chat-overlay" class="collapsed">
+      <div id="chat-header">
+        <div id="chat-title">💬 Чат</div>
+        <div id="chat-toggle">▲</div>
+      </div>
+      <div id="chat-body">
+        <div id="chat-tabs">
+          <button id="tab-public" class="chat-tab active">Общий</button>
+          <button id="tab-private" class="chat-tab">Приватный</button>
+        </div>
+
+        <div id="active-users-title">Активные пользователи:</div>
+        <div id="active-users"></div>
+
+        <div id="chat-messages-container">
+          <div id="chat-messages"></div>
+          <div id="chat-private-messages"></div>
+        </div>
+
+        <div id="chat-input-row">
+          <input id="chat-input" placeholder="Напишите сообщение..." />
+          <button id="chat-send">Отправить</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="private-modal">
+      <div id="private-modal-content">
+        <div id="private-modal-text"></div>
+        <div id="private-buttons">
+          <button id="private-accept">Принять</button>
+          <button id="private-reject">Отклонить</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tooltip"></div>
+
+    <!-- JavaScript остается без изменений -->
+    <script>
+      // Весь JavaScript код остается таким же, как в предыдущей версии
+      const API_BASE = "http://26.159.85.188:8000";
+
+      const canvas = document.getElementById("starfield");
+      const ctx = canvas.getContext("2d");
+      const tooltip = document.getElementById("tooltip");
+      const userProfile = document.getElementById("user-profile");
+      const userLabel = document.getElementById("user-label");
+      const loginPanel = document.getElementById("login-panel");
+      const loginCodeInput = document.getElementById("login-code");
+      const loginBtn = document.getElementById("login-btn");
+      const codeTimer = document.getElementById("code-timer");
+      const timerMinutes = document.getElementById("timer-minutes");
+      const timerSeconds = document.getElementById("timer-seconds");
+
+      const skinPanel = document.getElementById("skin-panel");
+      const skinBody = document.getElementById("skin-body");
+      const skinBalance = document.getElementById("skin-balance");
+      const skinList = document.getElementById("skin-list");
+      const profilePanel = document.getElementById("profile-panel");
+      const profileUsername = document.getElementById("profile-username");
+      const profileActivity = document.getElementById("profile-activity");
+      const profileColor = document.getElementById("profile-color");
+      const profileShape = document.getElementById("profile-shape");
+      const editInfoInput = document.getElementById("edit-info");
+      const saveInfoBtn = document.getElementById("save-info");
+
+      const chatOverlay = document.getElementById("chat-overlay");
+      const chatToggle = document.getElementById("chat-toggle");
+      const chatInput = document.getElementById("chat-input");
+      const chatSend = document.getElementById("chat-send");
+      const chatMessages = document.getElementById("chat-messages");
+      const chatPrivateMessages = document.getElementById(
+        "chat-private-messages"
+      );
+      const activeUsers = document.getElementById("active-users");
+      const chatTitle = document.getElementById("chat-title");
+
+      const tabPublic = document.getElementById("tab-public");
+      const tabPrivate = document.getElementById("tab-private");
+
+      const privateModal = document.getElementById("private-modal");
+      const privateModalText = document.getElementById("private-modal-text");
+      const privateAccept = document.getElementById("private-accept");
+      const privateReject = document.getElementById("private-reject");
+
+      let stars = [];
+      let lastTime = 0;
+      let globalTime = 0;
+      let currentHoveredStar = null;
+      let currentUserId = null;
+      let currentUsername = null;
+      let currentActivity = 0;
+      let currentStarColor = "#ffffff";
+      let currentStarShape = "circle";
+      let currentSkinsOwned = [];
+      let currentInfo = "";
+      let activeUsersList = new Set();
+
+      let chatMode = "public";
+      let currentPrivatePartner = null;
+      let pendingPrivateFromId = null;
+      let pendingPrivateFromName = null;
+
+      let lastSentMessage = "";
+      let lastSentTime = 0;
+
+      let resetTimeLeft = 60 * 60;
+      let resetTimerInterval = null;
+
+      // username -> user_id
+      const userIdsByUsername = {};
+
+      // Флаг для предотвращения двойного открытия профиля
+      let isProfileOpen = false;
+
+      function tryAutoLogin() {
+        const raw = localStorage.getItem("star_users_login");
+        if (!raw) return;
+
+        try {
+          const saved = JSON.parse(raw);
+          const loginTime = saved.loginTime || 0;
+          const now = Date.now();
+          if (now - loginTime > 3600000) {
+            localStorage.removeItem("star_users_login");
+            return;
+          }
+
+          const u = saved.user;
+          if (!u || !u.id) {
+            localStorage.removeItem("star_users_login");
+            return;
+          }
+
+          currentUserId = u.id;
+          currentUsername = u.username || u.full_name || "id" + u.id;
+          currentActivity = u.activity_score || 0;
+          currentStarColor = u.star_color || "#ffffff";
+          currentStarShape = u.star_shape || "circle";
+          currentSkinsOwned = u.skins_owned || [];
+          currentInfo = u.info || "";
+
+          userLabel.textContent = "@" + currentUsername;
+          userProfile.classList.remove("hidden");
+          loginPanel.classList.add("hidden");
+          updateProfileInfo();
+          updateSkinBalance();
+          loadSkins();
+          loadPublicChatHistory();
+
+          codeTimer.classList.add("hidden");
+        } catch (e) {
+          console.error("auto login parse error", e);
+          localStorage.removeItem("star_users_login");
+        }
+      }
+
+      function startResetTimer() {
+        const timerStart = Date.now();
+        localStorage.setItem("loginCodeTimerStart", timerStart.toString());
+
+        const savedStart = localStorage.getItem("loginCodeTimerStart");
+        const savedCode = localStorage.getItem("loginCodeValue");
+
+        if (savedStart && savedCode) {
+          const elapsedSeconds = Math.floor(
+            (Date.now() - parseInt(savedStart)) / 1000
+          );
+          resetTimeLeft = Math.max(0, 60 * 60 - elapsedSeconds);
+
+          if (resetTimeLeft > 0) {
+            loginCodeInput.value = savedCode;
+            codeTimer.classList.remove("hidden");
+          }
+        }
+
+        updateTimerDisplay();
+
+        if (resetTimerInterval) {
+          clearInterval(resetTimerInterval);
+        }
+
+        resetTimerInterval = setInterval(() => {
+          resetTimeLeft--;
+          updateTimerDisplay();
+          localStorage.setItem("loginCodeTimerLeft", resetTimeLeft.toString());
+
+          if (resetTimeLeft <= 0) {
+            resetLoginCode();
+          }
+        }, 1000);
+      }
+
+      function updateTimerDisplay() {
+        const minutes = Math.floor(resetTimeLeft / 60);
+        const seconds = resetTimeLeft % 60;
+
+        timerMinutes.textContent = minutes.toString().padStart(2, "0");
+        timerSeconds.textContent = seconds.toString().padStart(2, "0");
+      }
+
+      function resetLoginCode() {
+        loginCodeInput.value = "";
+        codeTimer.classList.add("hidden");
+        localStorage.removeItem("loginCodeValue");
+        localStorage.removeItem("loginCodeTimerStart");
+        localStorage.removeItem("loginCodeTimerLeft");
+
+        if (resetTimerInterval) {
+          clearInterval(resetTimerInterval);
+          resetTimerInterval = null;
+        }
+
+        resetTimeLeft = 60 * 60;
+      }
+
+      startResetTimer();
+      tryAutoLogin();
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+
+      function clamp01(x) {
+        return Math.max(0, Math.min(1, x));
+      }
+      function lerp(a, b, t) {
+        return a + (b - a) * t;
+      }
+
+      function hexToRgb(hex) {
+        let h = hex.replace("#", "");
+        if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+        const r = parseInt(h.substring(0, 2), 16);
+        const g = parseInt(h.substring(2, 4), 16);
+        const b = parseInt(h.substring(4, 6), 16);
+        return { r, g, b };
+      }
+      function rgbToHex(r, g, b) {
+        return (
+          "#" +
+          [r, g, b]
+            .map((x) => {
+              const h = x.toString(16);
+              return h.length === 1 ? "0" + h : h;
+            })
+            .join("")
+        );
+      }
+      function lerpColor(c1, c2, t) {
+        const a = hexToRgb(c1),
+          b = hexToRgb(c2);
+        return rgbToHex(
+          Math.round(lerp(a.r, b.r, t)),
+          Math.round(lerp(a.g, b.g, t)),
+          Math.round(lerp(a.b, b.b, t))
+        );
+      }
+      function hexToRgba(hex, alpha) {
+        const { r, g, b } = hexToRgb(hex);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      }
+
+      function updateStars(delta) {
+        const dt = delta * 0.06;
+        globalTime += dt;
+
+        for (const star of stars) {
+          star.baseX += star.speedX * dt;
+          star.baseY += star.speedY * dt;
+
+          if (star.baseX < -10) star.baseX = canvas.width + 10;
+          if (star.baseX > canvas.width + 10) star.baseX = -10;
+          if (star.baseY < -10) star.baseY = canvas.height + 10;
+          if (star.baseY > canvas.height + 10) star.baseY = -10;
+
+          if (star.active) {
+            star.activityLevel = clamp01(star.activityLevel + 0.05 * dt);
+          } else {
+            star.activityLevel = clamp01(star.activityLevel - 0.0008 * dt);
+          }
+
+          if (star.color !== star.targetColor) {
+            star.colorLerpT = clamp01(star.colorLerpT + 0.01 * dt * 60);
+            star.color = lerpColor(
+              star.color,
+              star.targetColor,
+              star.colorLerpT
+            );
+          }
+
+          if (star.shape !== star.targetShape) {
+            star.shapeLerpT = clamp01(star.shapeLerpT + 0.01 * dt * 60);
+            if (star.shapeLerpT >= 1) star.shape = star.targetShape;
+          }
+
+          star.twinklePhase += 0.002 * dt;
+          const k = (Math.sin(star.twinklePhase) + 1) / 2;
+
+          const score = Math.max(star.activityScore, 0);
+          const scoreNorm = Math.log10(1 + score);
+
+          const minRadius = 3.0;
+          const baseMaxRadius = 7.0;
+          const maxRadius = baseMaxRadius * (1 + 0.6 * scoreNorm);
+
+          const baseRadius = minRadius + (maxRadius - minRadius) * star.activityLevel;
+          star.radius = baseRadius * (0.7 + 0.6 * k);
+
+          const minGlow = 0.3;
+          const maxGlow = 1.9 + 0.8 * scoreNorm;
+          star.glow = minGlow + (maxGlow - minGlow) * star.activityLevel;
+
+          const vibAmp = 1.5 + 4 * star.activityLevel * (1 + 0.3 * scoreNorm);
+          const vibX =
+            Math.sin(globalTime * star.vibSpeedX + star.vibPhaseX) * vibAmp;
+          const vibY =
+            Math.cos(globalTime * star.vibSpeedY + star.vibPhaseY) * vibAmp;
+
+          star.x = star.baseX + vibX;
+          star.y = star.baseY + vibY;
+        }
+      }
+
+      function drawStars() {
+        // Очищаем канвас с прозрачностью для видимости анимированного фона
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (const star of stars) {
+          const color = star.color || "#ffffff";
+
+          ctx.save();
+
+          if (star.activityLevel > 0.3) {
+            ctx.fillStyle = hexToRgba(color, star.glow);
+            ctx.shadowColor = hexToRgba(color, 1);
+            ctx.shadowBlur = 24 * star.glow;
+          } else {
+            ctx.fillStyle = hexToRgba(color, star.glow * 0.4);
+            ctx.shadowColor = "rgba(15, 23, 42, 0.4)";
+            ctx.shadowBlur = 5 * star.glow;
+          }
+
+          ctx.translate(star.x, star.y);
+
+          const shape = star.shape;
+          const r = star.radius;
+
+          if (shape === "diamond") {
+            ctx.rotate(Math.PI / 4);
+            ctx.beginPath();
+            ctx.rect(-r, -r, r * 2, r * 2);
+            ctx.fill();
+          } else if (shape === "cross") {
+            ctx.beginPath();
+            ctx.rect(-r * 0.3, -r, r * 0.6, r * 2);
+            ctx.rect(-r, -r * 0.3, r * 2, r * 0.6);
+            ctx.fill();
+          } else if (shape === "triangle") {
+            ctx.beginPath();
+            ctx.moveTo(0, -r);
+            ctx.lineTo(r, r);
+            ctx.lineTo(-r, r);
+            ctx.closePath();
+            ctx.fill();
+          } else if (shape === "ring") {
+            ctx.beginPath();
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
+            ctx.lineWidth = r * 0.4;
+            ctx.strokeStyle = ctx.fillStyle;
+            ctx.stroke();
+          } else if (shape === "pulsar") {
+            const pulse =
+              0.8 + 0.4 * Math.sin(globalTime * 3 + star.twinklePhase);
+            ctx.beginPath();
+            ctx.arc(0, 0, r * pulse, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            ctx.beginPath();
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          ctx.restore();
+        }
+      }
+
+      function getStarAtPosition(x, y) {
+        for (let i = stars.length - 1; i >= 0; i--) {
+          const s = stars[i];
+          const dx = x - s.x;
+          const dy = y - s.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist <= s.radius + 6) return s;
+        }
+        return null;
+      }
+
+      function updateTooltipContent(star) {
+        if (!star) return;
+        tooltip.innerHTML =
+          `<strong>@${star.username}</strong><br>${star.info}<br>` +
+          `Активность: ${Math.round(star.activityScore)}`;
+      }
+
+      canvas.addEventListener("mousemove", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const star = getStarAtPosition(x, y);
+        currentHoveredStar = star;
+
+        if (star) {
+          tooltip.style.left = e.clientX + "px";
+          tooltip.style.top = e.clientY + "px";
+          updateTooltipContent(star);
+          tooltip.style.opacity = "1";
+          canvas.style.cursor = "pointer";
+        } else {
+          tooltip.style.opacity = "0";
+          canvas.style.cursor = "default";
+          currentHoveredStar = null;
+        }
+      });
+
+      canvas.addEventListener("mouseleave", () => {
+        tooltip.style.opacity = "0";
+        canvas.style.cursor = "default";
+        currentHoveredStar = null;
+      });
+
+      canvas.addEventListener("click", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const star = getStarAtPosition(x, y);
+        if (!star) return;
+
+        if (!currentUserId) {
+          addChatLine(
+            "🔒 Войдите через код из бота, чтобы начинать приватный чат",
+            "chat-system"
+          );
+          return;
+        }
+
+        if (!star.active) {
+          addChatLine(
+            `❌ @${star.username} сейчас неактивен`,
+            "chat-system"
+          );
+          return;
+        }
+
+        if (wsChat.readyState !== WebSocket.OPEN) {
+          addChatLine(
+            "❌ Чат недоступен (нет соединения)",
+            "chat-system"
+          );
+          return;
+        }
+
+        const targetUserId =
+          star.userId != null
+            ? star.userId
+            : userIdsByUsername[star.username] || null;
+
+        if (targetUserId == null) {
+          addChatLine(
+            `⚠️ Не знаю user_id @${star.username}, подождите обновления`,
+            "chat-system"
+          );
+          return;
+        }
+
+        // Проверяем, не пытаемся ли мы начать чат с самим собой
+        if (targetUserId === currentUserId) {
+          addChatLine(
+            "⚠️ Нельзя начать приватный чат с самим собой",
+            "chat-system"
+          );
+          return;
+        }
+
+        wsChat.send(
+          JSON.stringify({
+            type: "private_request",
+            user_id: currentUserId,
+            from_id: currentUserId,
+            to_id: targetUserId,
+          })
+        );
+
+        chatMode = "private";
+        currentPrivatePartner = targetUserId;
+        switchToPrivateTab();
+
+        addPrivateChatLine(
+          `🎭 Запрос приватного чата отправлен @${star.username}`,
+          "chat-system"
+        );
+      });
+
+      setInterval(() => {
+        if (currentHoveredStar && tooltip.style.opacity === "1") {
+          updateTooltipContent(currentHoveredStar);
+        }
+      }, 1000);
+
+      function animate(timestamp) {
+        if (!lastTime) lastTime = timestamp;
+        const delta = timestamp - lastTime;
+        lastTime = timestamp;
+
+        updateStars(delta);
+        drawStars();
+        requestAnimationFrame(animate);
+      }
+      requestAnimationFrame(animate);
+
+      function createStarObject(data) {
+        const isActive = !!data.active;
+        const activityLevel = isActive ? 1 : 0.3;
+        const activityScore = Number(data.activity_score || 0);
+        const color = data.star_color || "#ffffff";
+        const shape = data.star_shape || "circle";
+
+        return {
+          userId: data.id != null ? data.id : null,
+          baseX: Math.random() * canvas.width,
+          baseY: Math.random() * canvas.height,
+          x: 0,
+          y: 0,
+          radius: 7.0,
+          username: data.username,
+          info: data.info,
+          glow: 1.9,
+          active: isActive,
+          activityLevel,
+          activityScore,
+          color,
+          targetColor: color,
+          colorLerpT: 1,
+          shape,
+          targetShape: shape,
+          shapeLerpT: 1,
+          twinklePhase: Math.random() * Math.PI * 2,
+          speedX: (Math.random() - 0.5) * 0.04,
+          speedY: (Math.random() - 0.5) * 0.04,
+          vibSpeedX: 0.02 + Math.random() * 0.03,
+          vibSpeedY: 0.02 + Math.random() * 0.03,
+          vibPhaseX: Math.random() * Math.PI * 2,
+          vibPhaseY: Math.random() * Math.PI * 2,
+        };
+      }
+
+      function syncStarsFromBackend(list) {
+        const byUsername = new Map();
+        for (const star of stars) byUsername.set(star.username, star);
+
+        list.forEach((user) => {
+          const isActive = !!user.active;
+          const score = Number(user.activity_score || 0);
+          const color = user.star_color || "#ffffff";
+          const shape = user.star_shape || "circle";
+          const info = user.info || "";
+          const existing = byUsername.get(user.username);
+
+          if (user.id != null) {
+            userIdsByUsername[user.username] = user.id;
+          }
+
+          if (existing) {
+            existing.active = isActive;
+            existing.activityScore = score;
+            existing.targetColor = color;
+            existing.colorLerpT = 0;
+            existing.targetShape = shape;
+            existing.shapeLerpT = 0;
+            existing.info = info;
+            if (user.id != null) existing.userId = user.id;
+          } else {
+            stars.push(
+              createStarObject({
+                id: user.id,
+                username: user.username,
+                info: info,
+                active: isActive,
+                activity_score: score,
+                star_color: color,
+                star_shape: shape,
+              })
+            );
+          }
+        });
+      }
+
+      async function loadExistingStars() {
+        try {
+          const res = await fetch(API_BASE + "/api/stars");
+          const data = await res.json();
+          syncStarsFromBackend(data);
+        } catch (e) {
+          console.error("Не удалось загрузить звезды", e);
+        }
+      }
+
+      async function refreshStars() {
+        try {
+          const res = await fetch(API_BASE + "/api/stars");
+          const data = await res.json();
+          syncStarsFromBackend(data);
+        } catch (e) {
+          console.error("Не удалось обновить звезды", e);
+        }
+      }
+
+      loadExistingStars();
+      setInterval(refreshStars, 10000);
+
+      const ws = new WebSocket("ws://26.159.85.188:8000/ws");
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.type === "new_star") {
+          syncStarsFromBackend([
+            {
+              id: data.id,
+              username: data.username,
+              info: data.info,
+              active: data.active,
+              activity_score: data.activity_score ?? 0,
+              star_color: data.star_color || "#ffffff",
+              star_shape: data.star_shape || "circle",
+            },
+          ]);
+        }
+
+        if (data.type === "activity_update") {
+          const username = data.username;
+          const isActive = !!data.active;
+          const score = Number(data.activity_score || 0);
+          const color = data.star_color || "#ffffff";
+          const shape = data.star_shape || "circle";
+          const info = data.info || "";
+
+          for (const star of stars) {
+            if (star.username === username) {
+              star.active = isActive;
+              star.activityScore = score;
+              star.targetColor = color;
+              star.colorLerpT = 0;
+              star.targetShape = shape;
+              star.shapeLerpT = 0;
+              star.info = info;
+              if (data.id != null) {
+                star.userId = data.id;
+                userIdsByUsername[username] = data.id;
+              }
+              if (isActive) {
+                star.activityLevel = 1.0;
+              } else {
+                star.activityLevel = Math.min(star.activityLevel, 0.3);
+              }
+              if (currentHoveredStar === star && tooltip.style.opacity === "1") {
+                updateTooltipContent(star);
+              }
+              break;
+            }
+          }
+
+          if (currentUsername && username === currentUsername) {
+            currentActivity = score;
+            currentStarColor = color;
+            currentStarShape = shape;
+            currentInfo = info;
+            updateProfileInfo();
+            updateSkinBalance();
+          }
+        }
+      };
+
+      ws.onerror = (e) => {
+        console.error("WebSocket error", e);
+      };
+
+      async function doLogin() {
+        const code = loginCodeInput.value.trim().toUpperCase();
+        if (!code) {
+          alert("Введите код");
+          return;
+        }
+
+        localStorage.setItem("loginCodeValue", code);
+
+        try {
+          const res = await fetch(API_BASE + "/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code }),
+          });
+          const data = await res.json();
+          if (!data.ok) {
+            alert("Код неверный или устарел");
+            return;
+          }
+          const u = data.user;
+          currentUserId = u.id;
+          currentUsername = u.username || u.full_name || "id" + u.id;
+          currentActivity = u.activity_score || 0;
+          currentStarColor = u.star_color || "#ffffff";
+          currentStarShape = u.star_shape || "circle";
+          currentSkinsOwned = u.skins_owned || [];
+          currentInfo = u.info || "";
+
+          const loginPayload = {
+            user: u,
+            loginTime: Date.now(),
+          };
+          localStorage.setItem("star_users_login", JSON.stringify(loginPayload));
+
+          userLabel.textContent = "@" + currentUsername;
+          userProfile.classList.remove("hidden");
+          loginPanel.classList.add("hidden");
+          updateProfileInfo();
+          updateSkinBalance();
+          loadSkins();
+          loadPublicChatHistory();
+
+          resetTimeLeft = 60 * 60;
+          codeTimer.classList.remove("hidden");
+          updateTimerDisplay();
+        } catch (e) {
+          console.error("login error", e);
+          alert("Ошибка при входе");
+        }
+      }
+
+      loginBtn.addEventListener("click", doLogin);
+      loginCodeInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          doLogin();
+        }
+      });
+
+      loginCodeInput.addEventListener("input", (e) => {
+        const code = e.target.value.trim().toUpperCase();
+        if (code.length === 6) {
+          localStorage.setItem("loginCodeValue", code);
+        }
+      });
+
+      function toggleSkinPanel() {
+        skinPanel.classList.toggle("collapsed");
+        const skinToggle = document.getElementById("skin-toggle");
+        skinToggle.textContent = skinPanel.classList.contains("collapsed")
+          ? "▼"
+          : "▲";
+      }
+
+      skinPanel.addEventListener("click", (e) => {
+        if (!e.target.closest(".skin-item button")) {
+          toggleSkinPanel();
+        }
+      });
+
+      async function loadSkins() {
+        try {
+          const res = await fetch(API_BASE + "/api/skins");
+          const data = await res.json();
+          skinList.innerHTML = "";
+          data.skins.forEach((skin) => {
+            const div = document.createElement("div");
+            div.className = "skin-item";
+
+            const left = document.createElement("div");
+            left.className = "skin-info";
+
+            const preview = document.createElement("div");
+            preview.className = "skin-color-preview";
+            if (skin.color) {
+              preview.style.backgroundColor = skin.color;
+            } else {
+              preview.style.backgroundColor = "#1f2937";
+            }
+
+            const label = document.createElement("span");
+            const typeLabel =
+              skin.type === "color"
+                ? "цвет"
+                : skin.type === "shape"
+                ? "форма"
+                : "оба";
+            label.textContent = `${skin.id} (${skin.cost} очков, ${typeLabel})`;
+
+            left.appendChild(preview);
+            left.appendChild(label);
+
+            const btn = document.createElement("button");
+            const owned = currentSkinsOwned.includes(skin.id);
+            btn.textContent = owned ? "Выбрать" : "Купить";
+            btn.onclick = (e) => {
+              e.stopPropagation();
+              buySkin(skin.id);
+            };
+
+            div.appendChild(left);
+            div.appendChild(btn);
+            skinList.appendChild(div);
+          });
+          updateSkinBalance();
+        } catch (e) {
+          console.error("skins load error", e);
+        }
+      }
+
+      function updateSkinBalance() {
+        skinBalance.innerHTML = `Ваша активность: <strong>${Math.round(
+          currentActivity
+        )}</strong> очков`;
+      }
+
+      async function buySkin(skinId) {
+        if (!currentUserId) {
+          alert("Сначала войди через код бота");
+          return;
+        }
+        try {
+          const res = await fetch(API_BASE + "/api/buy_skin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: currentUserId, skin_id: skinId }),
+          });
+          const data = await res.json();
+          if (!data.ok) {
+            if (data.error === "not_enough_activity") {
+              alert("Недостаточно активности для покупки");
+            } else {
+              alert("Не удалось купить/выбрать скин: " + data.error);
+            }
+            return;
+          }
+          const u = data.user;
+          currentActivity = u.activity_score || 0;
+          currentStarColor = u.star_color || "#ffffff";
+          currentStarShape = u.star_shape || "circle";
+          currentSkinsOwned = u.skins_owned || [];
+          updateSkinBalance();
+          updateProfileInfo();
+          loadSkins();
+
+          const raw = localStorage.getItem("star_users_login");
+          if (raw) {
+            try {
+              const saved = JSON.parse(raw);
+              saved.user = {
+                ...saved.user,
+                activity_score: currentActivity,
+                star_color: currentStarColor,
+                star_shape: currentStarShape,
+                skins_owned: currentSkinsOwned,
+              };
+              localStorage.setItem(
+                "star_users_login",
+                JSON.stringify(saved)
+              );
+            } catch {}
+          }
+        } catch (e) {
+          console.error("buy skin error", e);
+          alert("Ошибка при покупке скина");
+        }
+      }
+
+      function updateProfileInfo() {
+        profileUsername.textContent = currentUsername || "";
+        profileActivity.textContent = Math.round(currentActivity || 0);
+        profileColor.textContent = currentStarColor || "#ffffff";
+        profileShape.textContent = currentStarShape || "circle";
+        editInfoInput.value = currentInfo || "";
+      }
+
+      userProfile.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (currentUserId) {
+          if (isProfileOpen) {
+            profilePanel.classList.remove("visible");
+            isProfileOpen = false;
+          } else {
+            profilePanel.classList.add("visible");
+            isProfileOpen = true;
+          }
+        } else {
+          alert("Сначала войдите в систему");
+        }
+      });
+
+      saveInfoBtn.addEventListener("click", async () => {
+        if (!currentUserId) return;
+
+        const newInfo = editInfoInput.value.trim();
+        if (!newInfo) {
+          alert("Введите описание профиля");
+          return;
+        }
+
+        try {
+          const res = await fetch(API_BASE + "/api/update_info", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_id: currentUserId,
+              info: newInfo,
+            }),
+          });
+          const data = await res.json();
+          if (data.ok) {
+            currentInfo = newInfo;
+            alert("Описание профиля обновлено!");
+            profilePanel.classList.remove("visible");
+            isProfileOpen = false;
+
+            for (const star of stars) {
+              if (star.username === currentUsername) {
+                star.info = newInfo;
+                break;
+              }
+            }
+
+            const raw = localStorage.getItem("star_users_login");
+            if (raw) {
+              try {
+                const saved = JSON.parse(raw);
+                saved.user = {
+                  ...saved.user,
+                  info: currentInfo,
+                };
+                localStorage.setItem(
+                  "star_users_login",
+                  JSON.stringify(saved)
+                );
+              } catch {}
+            }
+          } else {
+            alert("Ошибка при обновлении: " + data.error);
+          }
+        } catch (e) {
+          console.error("update info error", e);
+          alert("Ошибка при обновлении описания");
+        }
+      });
+
+      document.addEventListener("click", (e) => {
+        if (
+          !profilePanel.contains(e.target) &&
+          !userProfile.contains(e.target)
+        ) {
+          profilePanel.classList.remove("visible");
+          isProfileOpen = false;
+        }
+      });
+
+      function updateActiveUsers() {
+        activeUsersList.clear();
+        stars.forEach((star) => {
+          if (star.active && star.username !== currentUsername) {
+            activeUsersList.add(star.username);
+          }
+        });
+
+        activeUsers.innerHTML = "";
+        if (activeUsersList.size === 0) {
+          const emptyTag = document.createElement("div");
+          emptyTag.className = "user-tag";
+          emptyTag.textContent = "Нет активных пользователей";
+          emptyTag.style.opacity = "0.5";
+          activeUsers.appendChild(emptyTag);
+        } else {
+          activeUsersList.forEach((username) => {
+            const userTag = document.createElement("div");
+            userTag.className = "user-tag";
+            userTag.textContent = `@${username}`;
+            userTag.onclick = (e) => {
+              e.stopPropagation();
+              addChatLine(
+                `💡 Нажмите на звезду @${username}, чтобы пригласить в приватный чат`,
+                "chat-system"
+              );
+            };
+            activeUsers.appendChild(userTag);
+          });
+        }
+      }
+
+      async function loadPublicChatHistory() {
+        try {
+          const res = await fetch(API_BASE + "/api/public_chat");
+          const data = await res.json();
+          const msgs = data.messages || [];
+          chatMessages.innerHTML = "";
+          msgs.forEach((m) => {
+            addChatLine(
+              `${m.username}: ${m.text}`,
+              m.username === currentUsername ? "chat-me" : "chat-other"
+            );
+          });
+
+          setTimeout(scrollChatToBottom, 0);
+        } catch (e) {
+          console.error("public chat load error", e);
+        }
+      }
+
+      chatOverlay.addEventListener("click", (e) => {
+        if (
+          e.target.closest("#chat-toggle") ||
+          e.target.closest("#chat-input") ||
+          e.target.closest("#chat-send") ||
+          e.target.closest("#tab-public") ||
+          e.target.closest("#tab-private") ||
+          e.target.closest(".user-tag") ||
+          e.target.closest("#active-users")
+        ) {
+          return;
+        }
+        toggleChat();
+      });
+
+      chatToggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleChat();
+      });
+
+      function scrollChatToBottom() {
+        const container =
+          chatMode === "private" ? chatPrivateMessages : chatMessages;
+        container.scrollTop = container.scrollHeight;
+      }
+
+      function toggleChat() {
+        const collapsed = chatOverlay.classList.toggle("collapsed");
+        chatToggle.textContent = collapsed ? "▲" : "▼";
+        if (!collapsed) {
+          chatInput.focus();
+          setTimeout(scrollChatToBottom, 0);
+        }
+      }
+
+      function addChatLine(text, cls = "") {
+        const div = document.createElement("div");
+        div.className = "chat-line " + cls;
+        div.textContent = text;
+        chatMessages.appendChild(div);
+        if (chatMode === "public") scrollChatToBottom();
+      }
+
+      function addPrivateChatLine(text, cls = "") {
+        const div = document.createElement("div");
+        div.className = "chat-line " + cls;
+        div.textContent = text;
+        chatPrivateMessages.appendChild(div);
+        if (chatMode === "private") scrollChatToBottom();
+      }
+
+      function switchToPublicTab() {
+        chatMode = "public";
+        tabPublic.classList.add("active");
+        tabPrivate.classList.remove("active");
+        chatMessages.style.display = "block";
+        chatPrivateMessages.style.display = "none";
+        chatTitle.textContent = "💬 Общий чат";
+        chatInput.value = "";
+        chatInput.placeholder = "Напишите сообщение...";
+        currentPrivatePartner = null;
+        scrollChatToBottom();
+      }
+
+      function switchToPrivateTab() {
+        chatMode = "private";
+        tabPrivate.classList.add("active");
+        tabPublic.classList.remove("active");
+        chatMessages.style.display = "none";
+        chatPrivateMessages.style.display = "block";
+        chatTitle.textContent = "🔒 Приватный чат";
+        chatInput.value = "";
+        if (pendingPrivateFromName) {
+          chatInput.placeholder = `Сообщение для @${pendingPrivateFromName}...`;
+        } else if (currentPrivatePartner) {
+          chatInput.placeholder = "Сообщение для собеседника...";
+        } else {
+          chatInput.placeholder = "Ожидайте подключения собеседника...";
+        }
+        scrollChatToBottom();
+      }
+
+      tabPublic.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (chatMode !== "public") {
+          switchToPublicTab();
+        }
+      });
+
+      tabPrivate.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (chatMode !== "private") {
+          switchToPrivateTab();
+        }
+      });
+
+      const wsChat = new WebSocket("ws://26.159.85.188:8000/ws_chat");
+
+      wsChat.onopen = () => {
+        addChatLine("✅ Подключение к общему чату...", "chat-system");
+        updateActiveUsers();
+        setInterval(updateActiveUsers, 5000);
+      };
+
+      wsChat.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === "system") {
+            if (chatMode === "public") {
+              addChatLine(data.message, "chat-system");
+            } else {
+              addPrivateChatLine(data.message, "chat-system");
+            }
+          } else if (data.type === "public") {
+            if (chatMode === "public") {
+              const name = data.username || "Кто-то";
+              if (data.username !== currentUsername) {
+                addChatLine(`${name}: ${data.text}`, "chat-other");
+              }
+            }
+          } else if (data.type === "user_joined") {
+            addChatLine(
+              `👤 @${data.username} присоединился к чату`,
+              "chat-system"
+            );
+            updateActiveUsers();
+          } else if (data.type === "user_left") {
+            addChatLine(
+              `👋 @${data.username} покинул чат`,
+              "chat-system"
+            );
+            updateActiveUsers();
+          } else if (data.type === "private_request") {
+            if (currentUserId && Number(data.to_id) === Number(currentUserId)) {
+              if (pendingPrivateFromId !== data.from_id) {
+                pendingPrivateFromId = data.from_id;
+                pendingPrivateFromName = data.from_username || "пользователь";
+                privateModalText.textContent = `@${
+                  data.from_username || "пользователь"
+                } приглашает в приватный чат`;
+                privateModal.style.display = "flex";
+
+                switchToPrivateTab();
+                addPrivateChatLine(
+                  `🔔 @${pendingPrivateFromName} приглашает вас в приватный чат`,
+                  "chat-system"
+                );
+              }
+            }
+          } else if (data.type === "private_response") {
+            if (currentUserId && Number(data.to_id) === Number(currentUserId)) {
+              if (data.accepted) {
+                chatMode = "private";
+                currentPrivatePartner = data.from_id;
+                switchToPrivateTab();
+                chatInput.placeholder = `Сообщение для @${data.from_username}...`;
+                addPrivateChatLine(
+                  `✅ @${data.from_username} принял запрос, приватный чат начат`,
+                  "chat-system"
+                );
+              } else {
+                switchToPublicTab();
+                addChatLine(
+                  `❌ @${data.from_username} отклонил ваш запрос на приватный чат`,
+                  "chat-system"
+                );
+              }
+            }
+          } else if (data.type === "private") {
+  if (
+    currentUserId &&
+    Number(data.to_id) === Number(currentUserId)
+  ) {
+    if (chatMode !== "private") {
+      switchToPrivateTab();
+    }
+    // можно локально зафиксировать партнёра по from_id
+    currentPrivatePartner = data.from_id;
+
+    addPrivateChatLine(
+      `[ЛС] ${data.username}: ${data.text}`,
+      "chat-other"
+    );
+  }
+}
+
+        } catch (e) {
+          console.error("chat ws parse error", e);
+        }
+      };
+
+      wsChat.onerror = (e) => {
+        console.error("chat ws error", e);
+        addChatLine("❌ Ошибка соединения с чатом", "chat-system");
+      };
+
+      wsChat.onclose = () => {
+        addChatLine("🔌 Соединение с чатом закрыто", "chat-system");
+      };
+
+      privateAccept.addEventListener("click", () => {
+        if (!pendingPrivateFromId) {
+          privateModal.style.display = "none";
+          return;
+        }
+        if (wsChat.readyState === WebSocket.OPEN) {
+          wsChat.send(
+            JSON.stringify({
+              type: "private_response",
+              accepted: true,
+              user_id: currentUserId,
+              from_id: currentUserId,
+              to_id: pendingPrivateFromId,
+            })
+          );
+          chatMode = "private";
+          currentPrivatePartner = pendingPrivateFromId;
+          switchToPrivateTab();
+          chatInput.placeholder = `Сообщение для @${pendingPrivateFromName}...`;
+          addPrivateChatLine(
+            `✅ Приватный чат с @${pendingPrivateFromName} начат`,
+            "chat-system"
+          );
+        }
+        privateModal.style.display = "none";
+        pendingPrivateFromId = null;
+        pendingPrivateFromName = null;
+      });
+
+      privateReject.addEventListener("click", () => {
+        if (pendingPrivateFromId && wsChat.readyState === WebSocket.OPEN) {
+          wsChat.send(
+            JSON.stringify({
+              type: "private_response",
+              accepted: false,
+              user_id: currentUserId,
+              from_id: currentUserId,
+              to_id: pendingPrivateFromId,
+            })
+          );
+        }
+        switchToPublicTab();
+        privateModal.style.display = "none";
+        pendingPrivateFromId = null;
+        pendingPrivateFromName = null;
+      });
+
+      function sendChatMessage() {
+        const text = chatInput.value.trim();
+        if (!text) return;
+
+        const now = Date.now();
+        if (text === lastSentMessage && now - lastSentTime < 2000) {
+          const fn =
+            chatMode === "private" ? addPrivateChatLine : addChatLine;
+          fn(
+            "⚠️ Пожалуйста, не дублируйте сообщения так быстро",
+            "chat-system"
+          );
+          return;
+        }
+
+        if (!currentUserId) {
+          const fn =
+            chatMode === "private" ? addPrivateChatLine : addChatLine;
+          fn(
+            "🔒 Нужно войти через код из бота, чтобы писать в чат",
+            "chat-system"
+          );
+          return;
+        }
+
+        if (wsChat.readyState !== WebSocket.OPEN) {
+          const fn =
+            chatMode === "private" ? addPrivateChatLine : addChatLine;
+          fn("❌ Чат недоступен (нет соединения)", "chat-system");
+          return;
+        }
+
+        const mode =
+          chatMode === "private" && currentPrivatePartner != null
+            ? "private"
+            : "public";
+
+        if (mode === "private") {
+          if (currentPrivatePartner == null) {
+            addPrivateChatLine(
+              "ℹ️ Ожидайте подключения собеседника...",
+              "chat-system"
+            );
+            return;
+          }
+          
+          if (!pendingPrivateFromId && !currentPrivatePartner) {
+            addPrivateChatLine(
+              "⚠️ Приватный чат не активен. Дождитесь принятия приглашения.",
+              "chat-system"
+            );
+            return;
+          }
+        }
+
+        wsChat.send(
+          JSON.stringify({
+            type: "message",
+            text,
+            mode,
+            user_id: currentUserId,
+            username: currentUsername,
+            partner_id: currentPrivatePartner || null,
+          })
+        );
+
+        if (mode === "public") {
+          addChatLine(`${currentUsername}: ${text}`, "chat-me");
+        } else {
+          addPrivateChatLine(`[ЛС] ${currentUsername}: ${text}`, "chat-me");
+        }
+
+        lastSentMessage = text;
+        lastSentTime = now;
+
+        chatInput.value = "";
+        chatInput.focus();
+      }
+
+      chatSend.addEventListener("click", (e) => {
+        e.stopPropagation();
+        sendChatMessage();
+      });
+
+      chatInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          sendChatMessage();
+        }
+      });
+
+      setInterval(updateActiveUsers, 10000);
+    </script>
+  </body>
+</html>
