@@ -25,14 +25,14 @@ body {
   position: relative;
   background: linear-gradient(
     -45deg,
-    #010712,  /* еще темнее */
-    #080d16,  /* еще темнее */
-    #0d1322,  /* еще темнее */
+    #010712,
+    #080d16,
+    #0d1322,
     #121826,
-    #1a1440   /* темный индиго */
+    #1a1440
   );
   background-size: 400% 400%;
-  animation: gradientShift 35s ease infinite; /* медленнее */
+  animation: gradientShift 35s ease infinite;
 }
 
       @keyframes gradientShift {
@@ -56,7 +56,7 @@ body {
     radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.04) 0%, transparent 50%),
     radial-gradient(circle at 40% 40%, rgba(249, 115, 22, 0.03) 0%, transparent 50%);
-  z-index: 0; /* Было 1, стало 0 */
+  z-index: 0;
   animation: pulseBackground 25s ease-in-out infinite;
 }
 
@@ -67,10 +67,9 @@ body {
   height: 100%;
   display: block;
   background: transparent;
-  z-index: 1; /* Остается 1, теперь выше фонов */
+  z-index: 1;
 }
 
-      /* Эффект тумана/небулы */
       #nebula-overlay {
         position: absolute;
         inset: 0;
@@ -467,7 +466,6 @@ body {
         font-size: 12px;
       }
 
-      /* Магазин слева - ИЗНАЧАЛЬНО СВЕРНУТЫЙ */
       #skin-panel {
         position: fixed;
         top: 76px;
@@ -489,7 +487,6 @@ body {
           0 0 20px rgba(124, 58, 237, 0.15);
         cursor: pointer;
         backdrop-filter: blur(10px);
-        /* Убрана анимация покачивания */
       }
 
       #skin-panel.collapsed {
@@ -604,7 +601,6 @@ body {
         box-shadow: 0 0 10px rgba(37, 99, 235, 0.3);
       }
 
-      /* Профиль справа */
       #profile-panel {
         position: fixed;
         top: 76px;
@@ -696,7 +692,6 @@ body {
         box-shadow: 0 0 15px rgba(21, 128, 61, 0.4);
       }
 
-      /* Чат */
       #chat-overlay {
         position: fixed;
         bottom: 16px;
@@ -715,7 +710,6 @@ body {
           0 10px 26px rgba(0, 0, 0, 0.8),
           0 0 20px rgba(124, 58, 237, 0.15);
         backdrop-filter: blur(10px);
-        /* Убрана анимация покачивания */
       }
 
       #chat-overlay.collapsed {
@@ -1063,7 +1057,6 @@ body {
         box-shadow: 0 0 10px rgba(37, 99, 235, 0.25);
       }
 
-      /* Медиа-запросы */
       @media (max-width: 640px) {
         #top-bar {
           flex-direction: column;
@@ -1141,14 +1134,11 @@ body {
     </style>
   </head>
   <body>
-    <!-- Анимированный фон -->
     <div id="starfield-background"></div>
     <div id="nebula-overlay"></div>
     
-    <!-- Основной канвас со звездами -->
     <canvas id="starfield"></canvas>
 
-    <!-- Остальной HTML код остается без изменений -->
     <div id="top-bar">
       <div id="top-left">
         <div id="brand">
@@ -1266,27 +1256,13 @@ body {
 
     <div id="tooltip"></div>
 
-    <!-- JavaScript остается без изменений -->
     <script>
-      // Весь JavaScript код остается таким же, как в предыдущей версии
       const API_BASE = "https://starsky-3itn.onrender.com";
-const WS_URL = "wss://starsky-3itn.onrender.com/ws";
-const WS_CHAT_URL = "wss://starsky-3itn.onrender.com/ws_chat";
+      const WS_URL = "wss://starsky-3itn.onrender.com/ws";
+      const WS_CHAT_URL = "wss://starsky-3itn.onrender.com/ws_chat";
 
-const ws = new WebSocket(WS_URL);
-ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  // твоя логика обработки
-};
-
-const wsChat = new WebSocket(WS_CHAT_URL);
-wsChat.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  // логика чата
-};
-
-
-
+      const ws = new WebSocket(WS_URL);
+      
       const canvas = document.getElementById("starfield");
       const ctx = canvas.getContext("2d");
       const tooltip = document.getElementById("tooltip");
@@ -1354,11 +1330,122 @@ wsChat.onmessage = (event) => {
       let resetTimeLeft = 60 * 60;
       let resetTimerInterval = null;
 
-      // username -> user_id
       const userIdsByUsername = {};
 
-      // Флаг для предотвращения двойного открытия профиля
       let isProfileOpen = false;
+      let wsChat = null;
+
+      function initChatWebSocket() {
+        wsChat = new WebSocket(WS_CHAT_URL);
+        
+        wsChat.onopen = () => {
+          console.log('Chat WebSocket connected');
+          addChatLine("✅ Подключение к чату...", "chat-system");
+          updateActiveUsers();
+        };
+
+        wsChat.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === "system") {
+              if (chatMode === "public") {
+                addChatLine(data.message, "chat-system");
+              } else {
+                addPrivateChatLine(data.message, "chat-system");
+              }
+            } else if (data.type === "public") {
+              if (chatMode === "public") {
+                const name = data.username || "Кто-то";
+                if (data.username !== currentUsername) {
+                  addChatLine(`${name}: ${data.text}`, "chat-other");
+                }
+              }
+            } else if (data.type === "user_joined") {
+              addChatLine(
+                `👤 @${data.username} присоединился к чату`,
+                "chat-system"
+              );
+              updateActiveUsers();
+            } else if (data.type === "user_left") {
+              addChatLine(
+                `👋 @${data.username} покинул чат`,
+                "chat-system"
+              );
+              updateActiveUsers();
+            } else if (data.type === "private_request") {
+              if (currentUserId && Number(data.to_id) === Number(currentUserId)) {
+                if (pendingPrivateFromId !== data.from_id) {
+                  pendingPrivateFromId = data.from_id;
+                  pendingPrivateFromName = data.from_username || "пользователь";
+                  privateModalText.textContent = `@${
+                    data.from_username || "пользователь"
+                  } приглашает в приватный чат`;
+                  privateModal.style.display = "flex";
+
+                  switchToPrivateTab();
+                  addPrivateChatLine(
+                    `🔔 @${pendingPrivateFromName} приглашает вас в приватный чат`,
+                    "chat-system"
+                  );
+                }
+              }
+            } else if (data.type === "private_response") {
+              if (currentUserId && Number(data.to_id) === Number(currentUserId)) {
+                if (data.accepted) {
+                  chatMode = "private";
+                  currentPrivatePartner = data.from_id;
+                  switchToPrivateTab();
+                  chatInput.placeholder = `Сообщение для @${data.from_username}...`;
+                  addPrivateChatLine(
+                    `✅ @${data.from_username} принял запрос, приватный чат начат`,
+                    "chat-system"
+                  );
+                } else {
+                  switchToPublicTab();
+                  addChatLine(
+                    `❌ @${data.from_username} отклонил ваш запрос на приватный чат`,
+                    "chat-system"
+                  );
+                }
+              }
+            } else if (data.type === "private") {
+              if (currentUserId) {
+                if (Number(data.to_id) === Number(currentUserId)) {
+                  if (chatMode !== "private") {
+                    switchToPrivateTab();
+                  }
+                  currentPrivatePartner = data.from_id;
+                  addPrivateChatLine(
+                    `[ЛС] ${data.username}: ${data.text}`,
+                    "chat-other"
+                  );
+                } else if (Number(data.from_id) === Number(currentUserId)) {
+                  addPrivateChatLine(
+                    `[ЛС] ${currentUsername}: ${data.text}`,
+                    "chat-me"
+                  );
+                }
+              }
+            }
+          } catch (e) {
+            console.error("chat ws parse error", e);
+          }
+        };
+
+        wsChat.onerror = (e) => {
+          console.error("chat ws error", e);
+          addChatLine("❌ Ошибка соединения с чатом", "chat-system");
+        };
+
+        wsChat.onclose = () => {
+          console.log('Chat WebSocket disconnected, reconnecting in 3s...');
+          addChatLine("🔄 Переподключение к чату...", "chat-system");
+          setTimeout(initChatWebSocket, 3000);
+        };
+      }
+
+      initChatWebSocket();
 
       function tryAutoLogin() {
         const raw = localStorage.getItem("star_users_login");
@@ -1573,7 +1660,6 @@ wsChat.onmessage = (event) => {
       }
 
       function drawStars() {
-        // Очищаем канвас с прозрачностью для видимости анимированного фона
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         for (const star of stars) {
@@ -1725,7 +1811,6 @@ wsChat.onmessage = (event) => {
           return;
         }
 
-        // Проверяем, не пытаемся ли мы начать чат с самим собой
         if (targetUserId === currentUserId) {
           addChatLine(
             "⚠️ Нельзя начать приватный чат с самим собой",
@@ -1739,7 +1824,7 @@ wsChat.onmessage = (event) => {
             type: "private_request",
             user_id: currentUserId,
             from_id: currentUserId,
-            to_id: targetUserId,
+            to_id: targetUserId
           })
         );
 
@@ -1869,7 +1954,6 @@ wsChat.onmessage = (event) => {
 
       loadExistingStars();
       setInterval(refreshStars, 10000);
-
 
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -2341,7 +2425,7 @@ wsChat.onmessage = (event) => {
         } else if (currentPrivatePartner) {
           chatInput.placeholder = "Сообщение для собеседника...";
         } else {
-          chatInput.placeholder = "Ожидайте подключения собеседника...";
+          chatInput.placeholder = "Нажмите на звезду пользователя, чтобы начать приватный чат...";
         }
         scrollChatToBottom();
       }
@@ -2359,111 +2443,6 @@ wsChat.onmessage = (event) => {
           switchToPrivateTab();
         }
       });
-
-      const wsChat = new WebSocket(WS_CHAT_URL);
-
-      wsChat.onopen = () => {
-        addChatLine("✅ Подключение к общему чату...", "chat-system");
-        updateActiveUsers();
-        setInterval(updateActiveUsers, 5000);
-      };
-
-      wsChat.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          
-          if (data.type === "system") {
-            if (chatMode === "public") {
-              addChatLine(data.message, "chat-system");
-            } else {
-              addPrivateChatLine(data.message, "chat-system");
-            }
-          } else if (data.type === "public") {
-            if (chatMode === "public") {
-              const name = data.username || "Кто-то";
-              if (data.username !== currentUsername) {
-                addChatLine(`${name}: ${data.text}`, "chat-other");
-              }
-            }
-          } else if (data.type === "user_joined") {
-            addChatLine(
-              `👤 @${data.username} присоединился к чату`,
-              "chat-system"
-            );
-            updateActiveUsers();
-          } else if (data.type === "user_left") {
-            addChatLine(
-              `👋 @${data.username} покинул чат`,
-              "chat-system"
-            );
-            updateActiveUsers();
-          } else if (data.type === "private_request") {
-            if (currentUserId && Number(data.to_id) === Number(currentUserId)) {
-              if (pendingPrivateFromId !== data.from_id) {
-                pendingPrivateFromId = data.from_id;
-                pendingPrivateFromName = data.from_username || "пользователь";
-                privateModalText.textContent = `@${
-                  data.from_username || "пользователь"
-                } приглашает в приватный чат`;
-                privateModal.style.display = "flex";
-
-                switchToPrivateTab();
-                addPrivateChatLine(
-                  `🔔 @${pendingPrivateFromName} приглашает вас в приватный чат`,
-                  "chat-system"
-                );
-              }
-            }
-          } else if (data.type === "private_response") {
-            if (currentUserId && Number(data.to_id) === Number(currentUserId)) {
-              if (data.accepted) {
-                chatMode = "private";
-                currentPrivatePartner = data.from_id;
-                switchToPrivateTab();
-                chatInput.placeholder = `Сообщение для @${data.from_username}...`;
-                addPrivateChatLine(
-                  `✅ @${data.from_username} принял запрос, приватный чат начат`,
-                  "chat-system"
-                );
-              } else {
-                switchToPublicTab();
-                addChatLine(
-                  `❌ @${data.from_username} отклонил ваш запрос на приватный чат`,
-                  "chat-system"
-                );
-              }
-            }
-          } else if (data.type === "private") {
-  if (
-    currentUserId &&
-    Number(data.to_id) === Number(currentUserId)
-  ) {
-    if (chatMode !== "private") {
-      switchToPrivateTab();
-    }
-    // можно локально зафиксировать партнёра по from_id
-    currentPrivatePartner = data.from_id;
-
-    addPrivateChatLine(
-      `[ЛС] ${data.username}: ${data.text}`,
-      "chat-other"
-    );
-  }
-}
-
-        } catch (e) {
-          console.error("chat ws parse error", e);
-        }
-      };
-
-      wsChat.onerror = (e) => {
-        console.error("chat ws error", e);
-        addChatLine("❌ Ошибка соединения с чатом", "chat-system");
-      };
-
-      wsChat.onclose = () => {
-        addChatLine("🔌 Соединение с чатом закрыто", "chat-system");
-      };
 
       privateAccept.addEventListener("click", () => {
         if (!pendingPrivateFromId) {
@@ -2552,15 +2531,7 @@ wsChat.onmessage = (event) => {
         if (mode === "private") {
           if (currentPrivatePartner == null) {
             addPrivateChatLine(
-              "ℹ️ Ожидайте подключения собеседника...",
-              "chat-system"
-            );
-            return;
-          }
-          
-          if (!pendingPrivateFromId && !currentPrivatePartner) {
-            addPrivateChatLine(
-              "⚠️ Приватный чат не активен. Дождитесь принятия приглашения.",
+              "ℹ️ Нажмите на звезду пользователя, чтобы начать приватный чат",
               "chat-system"
             );
             return;
