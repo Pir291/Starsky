@@ -1273,6 +1273,19 @@ body {
 const WS_URL = "wss://starsky-3itn.onrender.com/ws";
 const WS_CHAT_URL = "wss://starsky-3itn.onrender.com/ws_chat";
 
+const ws = new WebSocket(WS_URL);
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  // твоя логика обработки
+};
+
+const wsChat = new WebSocket(WS_CHAT_URL);
+wsChat.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  // логика чата
+};
+
+
 
       const canvas = document.getElementById("starfield");
       const ctx = canvas.getContext("2d");
