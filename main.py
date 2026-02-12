@@ -1,3 +1,5 @@
+# main.py (исправленная версия)
+
 import os
 import asyncio
 from typing import List, Dict, Optional
@@ -39,7 +41,6 @@ import uvicorn
 # ================== CONFIG ==================
 
 BOT_TOKEN = "8127084344:AAHPVcpT2-USGSUQftgSR0OzCXlhO1fi5TA"
-  # обязательно задать в Render
 
 bot = Bot(
     token=BOT_TOKEN,
@@ -326,7 +327,7 @@ async def websocket_endpoint(websocket: WebSocket):
         ws_manager.disconnect(websocket)
 
 
-# ================== Чат на сайте (WS) ==================
+# ================== Чат на сайте (WS) - ИСПРАВЛЕНО ==================
 
 class SiteChatManager:
     def __init__(self):
@@ -363,26 +364,35 @@ class SiteChatManager:
 
         username = u["username"]
 
+        # Сохраняем в БД
         save_public_message(user_id, username, text)
 
+        # Отправляем ВСЕМ клиентам чата
+        message_data = {
+            "type": "public",
+            "username": username,
+            "text": text
+        }
+        
+        # Отправляем всем подключенным клиентам
         for client in list(self.broadcast_clients):
             try:
-                await client.send_json({
-                    "type": "public",
-                    "username": username,
-                    "text": text
-                })
+                await client.send_json(message_data)
             except Exception:
                 try:
                     self.broadcast_clients.remove(client)
                 except ValueError:
                     pass
 
+        # Обновляем активность пользователя
         set_last_active(u)
         inc_activity(u, 2.0)
         sync_star_state_to_db(user_id)
+        
+        # Обновляем звезду на небе
         await ws_manager.broadcast_json({
             "type": "activity_update",
+            "id": user_id,
             "username": username,
             "active": True,
             "activity_score": float(u.get("activity_score", 0.0)),
@@ -456,17 +466,11 @@ class SiteChatManager:
         ensure_user_cached(user_id)
         ensure_user_cached(partner_id)
 
-        if user_id not in users or partner_id not in users:
-            await ws.send_json({
-                "type": "system",
-                "message": "Собеседник не найден.",
-            })
-            return
-
+        # Проверяем, есть ли пара
         if self.private_pairs.get(user_id) != partner_id:
             await ws.send_json({
                 "type": "system",
-                "message": "Приватный чат ещё не подтверждён.",
+                "message": "Приватный чат ещё не подтверждён или уже завершён.",
             })
             return
 
@@ -474,13 +478,14 @@ class SiteChatManager:
         if not partner_ws:
             await ws.send_json({
                 "type": "system",
-                "message": "Собеседник офлайн.",
+                "message": "Собеседник вышел из чата.",
             })
             return
 
         u = users[user_id]
         username = u["username"]
 
+        # Отправляем сообщение собеседнику
         await partner_ws.send_json({
             "type": "private",
             "from_id": user_id,
@@ -489,11 +494,15 @@ class SiteChatManager:
             "text": text,
         })
 
+        # Обновляем активность
         set_last_active(u)
         inc_activity(u, 3.0)
         sync_star_state_to_db(user_id)
+        
+        # Обновляем звезду
         await ws_manager.broadcast_json({
             "type": "activity_update",
+            "id": user_id,
             "username": username,
             "active": True,
             "activity_score": float(u.get("activity_score", 0.0)),
@@ -508,9 +517,19 @@ site_chat_manager = SiteChatManager()
 @app.websocket("/ws_chat")
 async def ws_chat(websocket: WebSocket):
     await site_chat_manager.connect(websocket)
+    user_id = None
+    
     try:
         while True:
             data = await websocket.receive_json()
+            
+            # Отправляем приветственное сообщение при подключении
+            if not hasattr(websocket, "welcomed"):
+                await websocket.send_json({
+                    "type": "system",
+                    "message": "✅ Подключение к чату установлено"
+                })
+                websocket.welcomed = True
 
             msg_type = data.get("type")
             text = (data.get("text") or "").strip()
@@ -552,6 +571,7 @@ async def ws_chat(websocket: WebSocket):
 
             if msg_type != "message":
                 continue
+                
             if not text:
                 continue
 
@@ -584,6 +604,10 @@ async def ws_chat(websocket: WebSocket):
                 )
 
     except WebSocketDisconnect:
+        print(f"WebSocket disconnected: {user_id}")
+        site_chat_manager.disconnect(websocket)
+    except Exception as e:
+        print(f"WebSocket error: {e}")
         site_chat_manager.disconnect(websocket)
 
 
@@ -698,7 +722,6 @@ STAR_SKINS = {
     "blue_color":    {"color": "#38bdf8", "cost": 30, "shape": None,       "type": "color"},
     "pink_color":    {"color": "#ec4899", "cost": 30, "shape": None,       "type": "color"},
     "green_color":   {"color": "#22c55e", "cost": 30, "shape": None,       "type": "color"},
-
     "diamond_shape": {"color": None,      "cost": 40, "shape": "diamond",  "type": "shape"},
     "cross_shape":   {"color": None,      "cost": 40, "shape": "cross",    "type": "shape"},
     "triangle_shape":{"color": None,      "cost": 50, "shape": "triangle", "type": "shape"},
@@ -770,6 +793,7 @@ async def api_buy_skin(request: Request):
 
     await ws_manager.broadcast_json({
         "type": "activity_update",
+        "id": user["id"],
         "username": user["username"],
         "active": True,
         "activity_score": float(user["activity_score"]),
@@ -958,7 +982,6 @@ async def activity_decay_loop():
         await asyncio.sleep(10)
         if users:
             dec_activity_all(0.5)
-            # при желании можно здесь же вызывать sync_star_state_to_db по всем
 
 
 async def run_bot():
