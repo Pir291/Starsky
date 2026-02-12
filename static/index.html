@@ -1870,7 +1870,6 @@ wsChat.onmessage = (event) => {
       loadExistingStars();
       setInterval(refreshStars, 10000);
 
-      const ws = new WebSocket(WS_URL);
 
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
