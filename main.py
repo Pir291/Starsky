@@ -1,3 +1,4 @@
+import os
 import asyncio
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
@@ -16,6 +17,7 @@ from aiogram.filters import CommandStart, Command
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.exceptions import TelegramNetworkError
 
 from db import (
     create_or_update_user,
@@ -34,7 +36,10 @@ from db import (
 
 import uvicorn
 
+# ================== CONFIG ==================
+
 BOT_TOKEN = "8127084344:AAHPVcpT2-USGSUQftgSR0OzCXlhO1fi5TA"
+  # обязательно задать в Render
 
 bot = Bot(
     token=BOT_TOKEN,
@@ -62,6 +67,8 @@ async def root():
     return FileResponse("static/index.html")
 
 
+# ================== WS: stars ==================
+
 class StarsWSManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
@@ -87,7 +94,7 @@ class StarsWSManager:
 
 ws_manager = StarsWSManager()
 
-# in-memory: только кэш активности/сессии
+# in-memory кэш
 users: Dict[int, Dict] = {}
 
 
@@ -153,9 +160,6 @@ def sync_star_state_to_db(user_id: int):
 
 
 def ensure_user_cached(user_id: int):
-    """
-    Гарантирует, что users[user_id] заполнен актуальными данными из БД.
-    """
     if user_id in users:
         return
 
@@ -190,7 +194,7 @@ def ensure_user_cached(user_id: int):
     }
 
 
-# ====== Публичный чат API (всё из БД) ======
+# ================== Публичный чат API ==================
 
 @app.get("/api/public_chat")
 async def api_public_chat():
@@ -203,7 +207,7 @@ async def api_public_chat():
     }
 
 
-# ====== Анонимный чат в боте ======
+# ================== Анонимный чат в боте ==================
 
 waiting_user_id: Optional[int] = None
 pairs: Dict[int, int] = {}
@@ -322,7 +326,7 @@ async def websocket_endpoint(websocket: WebSocket):
         ws_manager.disconnect(websocket)
 
 
-# ====== Чат на сайте (WS) ======
+# ================== Чат на сайте (WS) ==================
 
 class SiteChatManager:
     def __init__(self):
@@ -583,7 +587,7 @@ async def ws_chat(websocket: WebSocket):
         site_chat_manager.disconnect(websocket)
 
 
-# ====== API: звёзды, логин, скины, info ======
+# ================== API: звёзды, логин, скины, info ==================
 
 @app.get("/api/stars")
 async def get_stars():
@@ -814,7 +818,7 @@ async def api_update_info(request: Request):
     return {"ok": True}
 
 
-# ====== Бот ======
+# ================== Бот ==================
 
 @router.message(CommandStart())
 async def cmd_start(message: Message):
@@ -878,7 +882,7 @@ async def cmd_login(message: Message):
     await message.answer(
         "Код для входа на сайт Star Users:\n"
         f"`{code}`\n\n"
-        "Открой сайт [http://26.159.85.188:8000/](http://26.159.85.188:8000/) и введи этот код в поле «Код входа через бота».",
+        "Открой сайт и введи этот код в поле «Код входа через бота».",
         parse_mode="Markdown"
     )
 
@@ -947,18 +951,33 @@ async def any_message(message: Message):
     await ws_manager.broadcast_json(data)
 
 
+# ================== Служебные циклы и main ==================
+
 async def activity_decay_loop():
     while True:
         await asyncio.sleep(10)
         if users:
             dec_activity_all(0.5)
-            # при желании можно здесь же проходить по users и sync_star_state_to_db
+            # при желании можно здесь же вызывать sync_star_state_to_db по всем
+
+
+async def run_bot():
+    while True:
+        try:
+            await dp.start_polling(bot)
+        except TelegramNetworkError as e:
+            print("TelegramNetworkError, retry in 10s:", e)
+            await asyncio.sleep(10)
+        except Exception as e:
+            print("Unexpected error in bot:", e)
+            break
 
 
 async def main():
-    bot_task = asyncio.create_task(dp.start_polling(bot))
+    bot_task = asyncio.create_task(run_bot())
 
-    config = uvicorn.Config(app, host="0.0.0.0", port=8000, reload=False)
+    port = int(os.environ.get("PORT", "8000"))
+    config = uvicorn.Config(app, host="0.0.0.0", port=port, reload=False)
     server = uvicorn.Server(config)
     api_task = asyncio.create_task(server.serve())
 
